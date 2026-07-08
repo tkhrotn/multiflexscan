@@ -1,0 +1,46 @@
+bibentry(
+  bibtype = "Article",
+  title = "Detecting multiple spatial disease clusters: information criterion and scan statistic approach",
+  author = c(
+    person(given = "Kunihiko", family = "Takahashi"),
+    person(given = "Hideyasu", family = "Shimadzu")
+  ),
+  journal = "International Journal of Health Geographics",
+  volume = 19,
+  pages = 33,
+  year = 2020,
+  doi = "10.1186/s12942-020-00228-y",
+  key = "Takahashi-Shimadzu-2020"
+)
+
+bibentry(
+  bibtype = "Article",
+  title = "Flexible scan statistics for detecting spatial disease clusters: The {rflexscan} {R} package",
+  author = c(
+    person(given = "Takahiro", family = "Otani"),
+    person(given = "Kunihiko", family = "Takahashi")
+  ),
+  journal = "Journal of Statistical Software",
+  volume = 99,
+  number = 13,
+  pages = "1--22",
+  year = 2021,
+  doi = "10.18637/jss.v099.i13",
+  key = "Otani-Takahashi-2021"
+)
+
+bibentry(
+  bibtype = "Manual",
+  title = "multiflexscan: Information Criterion and Scan Statistic Approach for Detecting Multiple Disease Clusters",
+  author = c(
+    person(given = "Takahiro", family = "Otani", role = c("aut", "cre"),
+           email = "t.otani@aichi-cc.jp",
+           comment = c(ORCID = "0000-0002-4007-7817")),
+    person(given = "Kunihiko", family = "Takahashi", role = "aut")
+  ),
+  organization = "R package version 0.1.0",
+  year = 2026,
+  url = "https://github.com/tkhrotn/multiflexscan",
+  note = "Software paper under review for the Journal of Statistical Software",
+  key = "multiflexscan-package"
+)
