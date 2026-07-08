@@ -182,16 +182,20 @@ flexscan.clustertype <- c("HOT", "COLD", "BOTH")
 #'
 #' @examples
 #' \donttest{
-#' if (requireNamespace("rflexscan", quietly = TRUE)) {
-#'   x <- c(0, 1, 0, 1)
-#'   y <- c(0, 0, 1, 1)
-#'   name <- c("A", "B", "C", "D")
-#'   observed <- c(8, 10, 1, 1)
-#'   expected <- rep(2, 4)
-#'   nb <- list(c(2, 3), c(1, 4), c(1, 4), c(2, 3))
+#' if (requireNamespace("spdep", quietly = TRUE)) {
+#'   # load sample data (North Carolina SIDS data)
+#'   library(spdep)
+#'   data("nc.sids")
+#'
+#'   # calculate the expected numbers of cases
+#'   expected <- nc.sids$BIR74 * sum(nc.sids$SID74) / sum(nc.sids$BIR74)
+#'
 #'   fit <- multiflexscan(
-#'     x, y, name, observed, expected, nb,
-#'     simcount = 19, cores = 1, maxclusters = 2, clustersize = 2
+#'     x = nc.sids$x, y = nc.sids$y,
+#'     observed = nc.sids$SID74,
+#'     expected = expected,
+#'     name = rownames(nc.sids),
+#'     nb = ncCR85.nb
 #'   )
 #'   print(fit)
 #'   summary(fit)
@@ -315,6 +319,14 @@ multiflexscan <- function(x, y,
   }
   if (cores < 1) {
     stop("'cores' must be at least 1.")
+  }
+  limit_cores <- Sys.getenv("_R_CHECK_LIMIT_CORES_", unset = "")
+  if (nzchar(limit_cores)) {
+    if (tolower(limit_cores) %in% c("true", "default", "warn")) {
+      cores <- min(cores, 2L)
+    } else {
+      cores <- min(cores, as.integer(limit_cores))
+    }
   }
   if (clustersize < 1) {
     stop("'clustersize' must be at least 1.")

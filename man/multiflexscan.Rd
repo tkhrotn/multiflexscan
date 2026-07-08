@@ -151,16 +151,20 @@ simulated datasets.
 }
 \examples{
 \donttest{
-if (requireNamespace("rflexscan", quietly = TRUE)) {
-  x <- c(0, 1, 0, 1)
-  y <- c(0, 0, 1, 1)
-  name <- c("A", "B", "C", "D")
-  observed <- c(8, 10, 1, 1)
-  expected <- rep(2, 4)
-  nb <- list(c(2, 3), c(1, 4), c(1, 4), c(2, 3))
+if (requireNamespace("spdep", quietly = TRUE)) {
+  # load sample data (North Carolina SIDS data)
+  library(spdep)
+  data("nc.sids")
+
+  # calculate the expected numbers of cases
+  expected <- nc.sids$BIR74 * sum(nc.sids$SID74) / sum(nc.sids$BIR74)
+
   fit <- multiflexscan(
-    x, y, name, observed, expected, nb,
-    simcount = 19, cores = 1, maxclusters = 2, clustersize = 2
+    x = nc.sids$x, y = nc.sids$y,
+    observed = nc.sids$SID74,
+    expected = expected,
+    name = rownames(nc.sids),
+    nb = ncCR85.nb
   )
   print(fit)
   summary(fit)

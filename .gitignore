@@ -13,6 +13,7 @@
 
 # Output files from R CMD build
 /*.tar.gz
+/cran-submission/*.tar.gz
 
 # Output files from R CMD check
 /*.Rcheck/
