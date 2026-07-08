@@ -7,9 +7,6 @@ Takahashi and Shimadzu (2018, 2020). The package builds on
 cluster generation and adds information-criterion-based selection of the
 number of clusters and a global Monte Carlo test.
 
-A software paper describing this package is under review for the
-*Journal of Statistical Software*.
-
 ## Install
 
 ```r
