@@ -181,7 +181,6 @@ flexscan.clustertype <- c("HOT", "COLD", "BOTH")
 #' [plot.multiflexscan], [choropleth]
 #'
 #' @examples
-#' \donttest{
 #' if (requireNamespace("spdep", quietly = TRUE)) {
 #'   # load sample data (North Carolina SIDS data)
 #'   library(spdep)
@@ -190,17 +189,22 @@ flexscan.clustertype <- c("HOT", "COLD", "BOTH")
 #'   # calculate the expected numbers of cases
 #'   expected <- nc.sids$BIR74 * sum(nc.sids$SID74) / sum(nc.sids$BIR74)
 #'
+#'   # small settings are used here to keep the example fast; increase
+#'   # 'simcount', 'clustersize', and 'maxclusters' for practical analyses
 #'   fit <- multiflexscan(
 #'     x = nc.sids$x, y = nc.sids$y,
 #'     observed = nc.sids$SID74,
 #'     expected = expected,
 #'     name = rownames(nc.sids),
-#'     nb = ncCR85.nb
+#'     nb = ncCR85.nb,
+#'     clustersize = 5,
+#'     maxclusters = 3,
+#'     simcount = 99,
+#'     cores = 1
 #'   )
 #'   print(fit)
 #'   summary(fit)
 #'   plot(fit)
-#' }
 #' }
 #'
 #' @references

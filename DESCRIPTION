@@ -13,7 +13,7 @@ Authors@R: c(
 Author: Takahiro Otani [aut, cre] (<https://orcid.org/0000-0002-4007-7817>),
     Kunihiko Takahashi [aut]
 Maintainer: Takahiro Otani <t.otani@aichi-cc.jp>
-Description: Functions for detecting multiple disease clusters using the
+Description: Detecting multiple disease clusters using the
     information criterion and scan statistic approach developed by
     Takahashi and Shimadzu (2020) <doi:10.1186/s12942-020-00228-y>.
 License: GPL-3
