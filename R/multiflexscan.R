@@ -57,14 +57,17 @@ flexscan.clustertype <- c("HOT", "COLD", "BOTH")
 #' \deqn{\mathrm{RDC}_K = \frac{C_0 - C_K}{C_0},}
 #' where \eqn{C_K} is the information criterion of Takahashi and Shimadzu
 #' (2020). The selected number of clusters \code{nclust} is the value of
-#' \eqn{K} that maximizes \code{RDC}.
+#' \eqn{K} that maximizes \code{RDC}. If several values of \eqn{K} attain the
+#' same maximum \code{RDC}, the smallest such \eqn{K} is selected.
 #'
 #' Monte Carlo p-values follow the rank-based convention used in
 #' \pkg{rflexscan}:
 #' \deqn{p = \frac{\mathrm{rank}}{M + 1},}
 #' where \eqn{M} is \code{simcount}. The overall p-value \code{P} compares the
 #' maximum \code{RDC} from the observed data with maxima from datasets simulated
-#' under the null Poisson model. Cluster-level p-values \code{pval} compare each
+#' under the null Poisson model. Each null replication repeats the same
+#' candidate search and model-selection steps on a Poisson draw under the null
+#' expected counts. Cluster-level p-values \code{pval} compare each
 #' candidate cluster's scan statistic \code{stats} with statistics from the
 #' simulated datasets.
 #'
@@ -147,6 +150,14 @@ flexscan.clustertype <- c("HOT", "COLD", "BOTH")
 #' distributing Monte Carlo replications across worker processes (default
 #' \code{"PSOCK"}).
 #'
+#'
+#'
+#' @param seed
+#' Optional integer seed for reproducible Monte Carlo replications. When
+#' \code{cores > 1}, independent random streams are managed with
+#' \pkg{doRNG}; calling \code{set.seed()} alone is not sufficient for
+#' parallel reproducibility. The default \code{NULL} leaves the RNG
+#' unseeded.
 #'
 #' @return
 #' A list of class \code{"multiflexscan"} with the following components:
@@ -233,8 +244,9 @@ flexscan.clustertype <- c("HOT", "COLD", "BOTH")
 #'
 #' @importFrom rflexscan runFleXScan
 #' @importFrom utils capture.output setTxtProgressBar txtProgressBar
-#' @importFrom stats BIC glm logLik poisson rpois symnum
-#' @importFrom foreach foreach %dopar%
+#' @importFrom stats AIC BIC coef glm logLik nobs poisson rpois symnum
+#' @importFrom foreach foreach
+#' @importFrom doRNG %dorng% registerDoRNG
 #' @importFrom doSNOW registerDoSNOW
 #' @importFrom parallel makeCluster stopCluster detectCores
 #'
@@ -252,7 +264,8 @@ multiflexscan <- function(x, y,
                           simcount=999,
                           verbose=FALSE,
                           cores = max(1, parallel::detectCores() - 1),
-                          parallel_type = "PSOCK") {
+                          parallel_type = "PSOCK",
+                          seed = NULL) {
   call <- match.call()
   
   stattype <- match.arg(toupper(stattype), flexscan.stattype)
@@ -348,12 +361,7 @@ multiflexscan <- function(x, y,
     adj_mat <- matrix(0, nrow = nrow(coordinates), ncol = nrow(coordinates))
     for (i in 1:nrow(coordinates)) {
       if (any(nb[[i]] < 1 | nb[[i]] > nrow(coordinates))) {
-        stop(
-          sprintf(
-            "nb[[%d]] contains indices out of bounds [1, %d]: %s",
-            i, nrow(coordinates), paste(nb[[i]], collapse = ", ")
-          )
-        )
+        next
       }
       adj_mat[i, nb[[i]]] <- 1
     }
@@ -386,30 +394,28 @@ multiflexscan <- function(x, y,
 
   run_replication <- function(i) {
     if (i == 0) {
-      capture.output({
-        clst <- runFleXScan(setting, case, coordinates, adj_mat)
-      })
+      analysis_case <- case
     } else {
       sim_Observed <- vapply(case[, "expected"], rpois, integer(1), n = 1L)
-      sim_case <- case
-      sim_case[, "observed"] <- sim_Observed
-
-      # run FleXScan
-      capture.output({
-        clst <- runFleXScan(setting, sim_case, coordinates, adj_mat)
-      })
+      analysis_case <- case
+      analysis_case[, "observed"] <- sim_Observed
     }
+
+    # Candidate search and GLM use the same analysis counts
+    capture.output({
+      clst <- runFleXScan(setting, analysis_case, coordinates, adj_mat)
+    })
 
     # create cluster indicator variables
     if (length(clst) == 0) {
-      cas_tmp <- as.data.frame(case)
+      cas_tmp <- as.data.frame(analysis_case)
     } else {
       Z <- sapply(clst, function(clstr) {
-        z <- rep(0, nrow(case))
+        z <- rep(0, nrow(analysis_case))
         z[clstr$area] <- 1
         return(z)
       })
-      cas_tmp <- cbind(case, as.data.frame(Z))
+      cas_tmp <- cbind(analysis_case, as.data.frame(Z))
     }
 
     neg2logLik <- numeric()
@@ -426,21 +432,33 @@ multiflexscan <- function(x, y,
       neg2logLik <- c(neg2logLik, -2 * logLik(retval))
       aic <- c(aic, retval$aic)
       bic <- c(bic, BIC(retval))
-      C <- c(C, -2 * logLik(retval) + (3 * K + 1) * log(nrow(case)))
+      C <- c(C, -2 * logLik(retval) + (3 * K + 1) * log(nrow(analysis_case)))
     }
     RDC <- (C[1] - C) / C[1]
 
-    nclust <- which(RDC == max(RDC)) - 1
+    # On ties, which.max() returns the first maximum (smallest K)
+    nclust <- which.max(RDC) - 1L
 
     if (i == 0) {
       list(clst, neg2logLik, aic, bic, C, RDC, nclust)
     } else {
-      max_stat <- if (length(clst) > 0) clst[[1]]$stats else NA_real_
+      # No candidates: treat as weaker than any finite scan statistic
+      max_stat <- if (length(clst) > 0) clst[[1]]$stats else -Inf
       list(c(max(RDC), max_stat))
     }
   }
 
+  if (!is.null(seed)) {
+    if (!is.numeric(seed) || length(seed) != 1L || is.na(seed)) {
+      stop("'seed' must be a single numeric value or NULL.", call. = FALSE)
+    }
+    seed <- as.integer(seed)
+  }
+
   if (cores == 1L) {
+    if (!is.null(seed)) {
+      set.seed(seed)
+    }
     if (verbose) {
       pb <- txtProgressBar(max = simcount, style = 3)
       on.exit(try(close(pb), silent = TRUE), add = TRUE)
@@ -460,6 +478,9 @@ multiflexscan <- function(x, y,
     cl <- makeCluster(cores, type = parallel_type)
     on.exit(stopCluster(cl), add = TRUE)
     registerDoSNOW(cl)
+    if (!is.null(seed)) {
+      registerDoRNG(seed)
+    }
 
     if (verbose) {
       pb <- txtProgressBar(max = simcount, style = 3)
@@ -476,7 +497,7 @@ multiflexscan <- function(x, y,
       .inorder = TRUE,
       .options.snow = opts,
       .packages = "rflexscan"
-    ) %dopar% {
+    ) %dorng% {
       run_replication(i)
     }
 
@@ -497,7 +518,7 @@ multiflexscan <- function(x, y,
   maxRDC_null <- null[,1]
   maxLambda_null <- null[,2]
   
-  for (i in 1:length(clst)) {
+  for (i in seq_along(clst)) {
     clst[[i]]$rank <- (sum(maxLambda_null >= clst[[i]]$stats) + 1)
     clst[[i]]$pval <- clst[[i]]$rank / (simcount + 1)
   }
@@ -519,6 +540,8 @@ multiflexscan <- function(x, y,
   setting$maxclusters <- maxclusters
   setting$cores <- cores
   setting$clustertype <- clustertype
+  setting$seed <- seed
+  setting$parallel_type <- parallel_type
   
   input <- list()
   input$coordinates <- coordinates
@@ -557,8 +580,8 @@ print.multiflexscan <- function(x, ...) {
   cat("\nCall:\n", paste(deparse(x$call), sep = "\n", collapse = "\n"), 
       "\n\n", sep = "")
   
-  cat("Number of clusters selected: ", x$nclust, "\n", sep = "")
-  cat("P-value:", x$P, "\n\n")
+  cat("Number of clusters selected: ", nclusters(x), "\n", sep = "")
+  cat("P-value:", pvalue(x), "\n\n")
 }
 
 
@@ -612,7 +635,7 @@ print.multiflexscan <- function(x, ...) {
 #' @export
 #'
 plot.multiflexscan <- function(x,
-                               rank = 1:x$nclust,
+                               rank = seq_len(nclusters(x)),
                                pval = 1,
                                vertexsize = max(x$input$coordinates[, 1]) -
                                  min(x$input$coordinates[, 1]),
@@ -715,7 +738,7 @@ plot.multiflexscan <- function(x,
 #'
 #' @export
 #'
-choropleth <- function(x, regions, selected = seq_len(x$nclust),
+choropleth <- function(x, regions, selected = seq_len(nclusters(x)),
                        col = grDevices::palette(),
                        background = "grey95", border = "grey80",
                        border.lwd = 0.25, ...) {

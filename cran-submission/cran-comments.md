@@ -1,31 +1,36 @@
-## Resubmission
+## Submission
 
-This is a resubmission. In response to the CRAN review, we have:
-
-* Removed the redundant "Functions for" at the start of the Description field.
-* Unwrapped the example (previously in `\donttest{}`) so that it is executed
-  during checks. The example now uses small settings
-  (`clustersize = 5`, `maxclusters = 3`, `simcount = 99`, `cores = 1`) and
-  runs in about 1 second, well under 5 seconds.
-
-## R CMD check results
-
-0 errors | 0 warnings | 1 note
-
-* checking CRAN incoming feasibility ... NOTE (New submission)
+This is an update from CRAN version 0.1.0 to 0.2.0.
 
 ## Test environments
 
-* local macOS, R 4.6.0
-* `R CMD check --as-cran` — Status: 1 NOTE, 0 WARNINGs, 0 ERRORs
-  (New submission only)
+* local macOS (darwin 25.6.0), R 4.6.0
+* `R CMD check --as-cran` (including CRAN incoming checks)
 
-## Notes
+## R CMD check results
 
-* First CRAN release (version 0.1.0).
-* Depends on `rflexscan` for flexible and circular spatial scan statistics;
-  `multiflexscan` adds information-criterion-based selection of the number of
-  clusters and a global Monte Carlo p-value for the selected cluster set.
-* Suggested packages `sf` and `spdep` are used only in examples or optional
-  functions (`choropleth()` uses `sf` with `requireNamespace()` at runtime;
-  examples use the `nc.sids` data from `spdep`, as in `rflexscan`).
+0 errors | 0 warnings | 0 notes
+
+## Changes since the previous CRAN release (0.1.0)
+
+### Improvements
+
+* Parallel Monte Carlo replications now use **doRNG** (`%dorng%`) for
+  independent random streams across workers. A new `seed` argument seeds
+  sequential runs via `set.seed()` and parallel runs via `registerDoRNG()`.
+* Added accessors `nclusters()`, `pvalue()`, `clusters()`, and `get_setting()`.
+* Added S3 methods `as.data.frame()`, `coef()`, `nobs()`, `AIC()`, and `BIC()`
+  for `multiflexscan` objects.
+
+### Bug fixes
+
+* Invalid neighbor indices in list-form `nb` are skipped when building the
+  adjacency matrix, instead of stopping with an error.
+* Null Monte Carlo replications now use the same simulated counts for both
+  candidate search and the subsequent GLM / RDC steps (previously the GLM
+  always used the observed counts).
+* Empty candidate sets no longer error in the cluster p-value loop; null
+  replications with no candidates contribute `-Inf` as the maximum scan
+  statistic.
+* When several values of `K` attain the same maximum RDC, `nclust` is the
+  smallest such `K` (`which.max`).

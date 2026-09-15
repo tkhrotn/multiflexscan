@@ -7,7 +7,7 @@
 choropleth(
   x,
   regions,
-  selected = seq_len(x$nclust),
+  selected = seq_len(nclusters(x)),
   col = grDevices::palette(),
   background = "grey95",
   border = "grey80",

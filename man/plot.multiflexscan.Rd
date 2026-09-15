@@ -7,7 +7,7 @@ drawn with \pkg{igraph}, following \code{plot.rflexscan()}.}
 \usage{
 \method{plot}{multiflexscan}(
   x,
-  rank = 1:x$nclust,
+  rank = seq_len(nclusters(x)),
   pval = 1,
   vertexsize = max(x$input$coordinates[, 1]) - min(x$input$coordinates[, 1]),
   xlab = colnames(x$input$coordinates)[1],

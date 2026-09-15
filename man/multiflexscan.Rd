@@ -21,7 +21,8 @@ multiflexscan(
   simcount = 999,
   verbose = FALSE,
   cores = max(1, parallel::detectCores() - 1),
-  parallel_type = "PSOCK"
+  parallel_type = "PSOCK",
+  seed = NULL
 )
 }
 \arguments{
@@ -85,6 +86,12 @@ test.}
 \item{parallel_type}{Type of parallel backend passed to \code{parallel::makeCluster()} when
 distributing Monte Carlo replications across worker processes (default
 \code{"PSOCK"}).}
+
+\item{seed}{Optional integer seed for reproducible Monte Carlo replications. When
+\code{cores > 1}, independent random streams are managed with
+\pkg{doRNG}; calling \code{set.seed()} alone is not sufficient for
+parallel reproducibility. The default \code{NULL} leaves the RNG
+unseeded.}
 }
 \value{
 A list of class \code{"multiflexscan"} with the following components:
@@ -138,14 +145,17 @@ The relative difference criterion for a model with \eqn{K} clusters is
 \deqn{\mathrm{RDC}_K = \frac{C_0 - C_K}{C_0},}
 where \eqn{C_K} is the information criterion of Takahashi and Shimadzu
 (2020). The selected number of clusters \code{nclust} is the value of
-\eqn{K} that maximizes \code{RDC}.
+\eqn{K} that maximizes \code{RDC}. If several values of \eqn{K} attain the
+same maximum \code{RDC}, the smallest such \eqn{K} is selected.
 
 Monte Carlo p-values follow the rank-based convention used in
 \pkg{rflexscan}:
 \deqn{p = \frac{\mathrm{rank}}{M + 1},}
 where \eqn{M} is \code{simcount}. The overall p-value \code{P} compares the
 maximum \code{RDC} from the observed data with maxima from datasets simulated
-under the null Poisson model. Cluster-level p-values \code{pval} compare each
+under the null Poisson model. Each null replication repeats the same
+candidate search and model-selection steps on a Poisson draw under the null
+expected counts. Cluster-level p-values \code{pval} compare each
 candidate cluster's scan statistic \code{stats} with statistics from the
 simulated datasets.
 }
