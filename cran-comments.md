@@ -1,4 +1,31 @@
-## Submission
+## 0.3.0 submission draft
+
+Local update from 0.2.0 to 0.3.0; not yet submitted.
+
+### Test environment and results (2026-10-02)
+
+* Windows 11 x64, R 4.6.1 (ucrt)
+* `R CMD check --as-cran --no-manual`, with
+  `_R_CHECK_CRAN_INCOMING_REMOTE_=false` after CRAN index requests timed out
+* 0 errors | 0 warnings | 0 notes
+* PDF manual generation was not included in this check.
+* Executable examples, tests, vignette checks, and vignette rebuilding passed.
+
+### Changes
+
+* Added `model_criteria()`, `C_criterion()`, `RDC()`, and a `logLik()` method.
+* AIC respects `k`; AIC/BIC support multiple-model comparisons via standard R.
+* Tests cover independent Poisson fits, rank deficiency, null-only models,
+  S3 dispatch, multiple-model comparisons, and invalid inputs.
+* Statistical algorithms are unchanged.
+* Added a self-contained workflow vignette and runnable accessor examples.
+
+Before submission, rerun remote incoming checks, confirm the release baseline, check other platforms,
+and build and inspect the PDF manual.
+
+---
+
+## Archived notes for the 0.2.0 submission
 
 This is an update from CRAN version 0.1.0 to 0.2.0.
 

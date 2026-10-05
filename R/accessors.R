@@ -6,6 +6,9 @@
 #'
 #' @seealso [pvalue()], [clusters()], [get_setting()]
 #'
+#' @example inst/examples/small-fit.R
+#' @examples
+#' nclusters(fit)
 #' @export
 nclusters <- function(object) {
   if (!inherits(object, "multiflexscan")) {
@@ -23,6 +26,9 @@ nclusters <- function(object) {
 #'
 #' @seealso [nclusters()], [clusters()]
 #'
+#' @example inst/examples/small-fit.R
+#' @examples
+#' pvalue(fit)
 #' @export
 pvalue <- function(object) {
   if (!inherits(object, "multiflexscan")) {
@@ -46,6 +52,10 @@ pvalue <- function(object) {
 #'
 #' @seealso [nclusters()], [as.data.frame.multiflexscan], [coef.multiflexscan]
 #'
+#' @example inst/examples/small-fit.R
+#' @examples
+#' clusters(fit)
+#' clusters(fit, selected = FALSE)
 #' @export
 clusters <- function(object, selected = TRUE) {
   if (!inherits(object, "multiflexscan")) {
@@ -100,6 +110,9 @@ clusters <- function(object, selected = TRUE) {
 #'
 #' @seealso [nclusters()], [pvalue()]
 #'
+#' @example inst/examples/small-fit.R
+#' @examples
+#' get_setting(fit)
 #' @export
 get_setting <- function(object) {
   if (!inherits(object, "multiflexscan")) {
@@ -111,7 +124,6 @@ get_setting <- function(object) {
 
 #' Coerce selected clusters to a data frame
 #'
-#' @inheritParams clusters
 #' @param x A \code{multiflexscan} object.
 #' @param row.names Optional row names (ignored).
 #' @param optional Logical; ignored.
@@ -120,6 +132,9 @@ get_setting <- function(object) {
 #' @return A data frame of selected clusters (see [clusters()]).
 #'
 #' @method as.data.frame multiflexscan
+#' @example inst/examples/small-fit.R
+#' @examples
+#' as.data.frame(fit)
 #' @export
 as.data.frame.multiflexscan <- function(x, row.names = NULL, optional = FALSE,
                                         ...) {
@@ -135,6 +150,9 @@ as.data.frame.multiflexscan <- function(x, row.names = NULL, optional = FALSE,
 #' @return A data frame of selected clusters (see [clusters()]).
 #'
 #' @method coef multiflexscan
+#' @example inst/examples/small-fit.R
+#' @examples
+#' coef(fit)
 #' @export
 coef.multiflexscan <- function(object, ...) {
   clusters(object, selected = TRUE)
@@ -149,6 +167,9 @@ coef.multiflexscan <- function(object, ...) {
 #' @return Number of regions (rows) in the input data.
 #'
 #' @method nobs multiflexscan
+#' @example inst/examples/small-fit.R
+#' @examples
+#' nobs(fit)
 #' @export
 nobs.multiflexscan <- function(object, ...) {
   nrow(object$input$case)
@@ -158,16 +179,31 @@ nobs.multiflexscan <- function(object, ...) {
 #' AIC and BIC for the selected cluster model
 #'
 #' @param object A \code{multiflexscan} object.
-#' @param ... Unused.
-#' @param k Penalty per parameter for \code{AIC} (ignored; the stored AIC for
-#'   the selected model is returned).
+#' @param ... Optionally, additional fitted model objects for comparison.
+#' @param k Numeric penalty per estimated parameter for \code{AIC}.
+#'   The default, 2, gives ordinary AIC.
 #'
-#' @return The AIC or BIC of the selected \eqn{K}-cluster model.
+#' @return With one object, the AIC or BIC of the selected \eqn{K}-cluster
+#'   model. With multiple objects, a data frame containing \code{df} and
+#'   \code{AIC} or \code{BIC}, as in [stats::AIC()].
+#' @details These methods delegate to the standard R methods via [logLik()].
+#'   AIC and BIC are distinct from the criterion used to select the clusters;
+#'   use [C_criterion()] or [RDC()] for that criterion. Comparisons require
+#'   models fitted to the same response data with comparable likelihoods.
+#' @seealso [model_criteria()], [logLik.multiflexscan]
 #'
 #' @method AIC multiflexscan
+#' @example inst/examples/small-fit.R
+#' @examples
+#' AIC(fit)
+#' BIC(fit)
+#' AIC(fit, k = log(nobs(fit)))
 #' @export
 AIC.multiflexscan <- function(object, ..., k = 2) {
-  object$AIC[nclusters(object) + 1L]
+  if (!is.numeric(k) || length(k) != 1L || !is.finite(k)) {
+    stop("'k' must be a finite numeric scalar.", call. = FALSE)
+  }
+  NextMethod()
 }
 
 
@@ -175,5 +211,5 @@ AIC.multiflexscan <- function(object, ..., k = 2) {
 #' @method BIC multiflexscan
 #' @export
 BIC.multiflexscan <- function(object, ...) {
-  object$BIC[nclusters(object) + 1L]
+  NextMethod()
 }

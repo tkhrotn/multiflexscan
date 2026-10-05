@@ -53,6 +53,19 @@ The input object, invisibly.
 Plot method for the \code{multiflexscan} object. The neighborhood graph is
 drawn with \pkg{igraph}, following \code{plot.rflexscan()}.
 }
+\examples{
+# A small synthetic grid; low simulation count keeps this example quick.
+grid <- expand.grid(x = 1:5, y = 1:5)
+nb <- lapply(seq_len(nrow(grid)), function(i) which(
+  abs(grid$x - grid$x[i]) + abs(grid$y - grid$y[i]) == 1))
+observed <- rep(10, 25)
+observed[c(1, 2, 6, 7)] <- 30
+fit <- multiflexscan(grid$x, grid$y, name = as.character(seq_len(25)),
+  observed = observed, expected = rep(mean(observed), 25), nb = nb,
+  scanmethod = "CIRCULAR", clustersize = 4, maxclusters = 3,
+  simcount = 19, cores = 1, seed = 20261002)
+plot(fit, xlab = "Grid x", ylab = "Grid y")
+}
 \seealso{
 \link{multiflexscan}, \link{choropleth}, \link[rflexscan:plot.rflexscan]{rflexscan::plot.rflexscan}
 }

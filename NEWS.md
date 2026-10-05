@@ -1,5 +1,19 @@
 # multiflexscan NEWS
 
+## multiflexscan 0.3.0
+
+* Added a self-contained workflow vignette and runnable examples for the
+  result accessors and model-diagnostic methods.
+* Added `model_criteria()` to extract all model-selection criteria by cluster
+  count, with `selected = TRUE` to return only the selected model.
+* Added `C_criterion()` and `RDC()` for the selected model's criteria.
+* Added a `logLik()` method returning the selected Poisson model's likelihood,
+  effective parameter count, and number of observations without refitting.
+* `AIC()` now respects `k`; `AIC()` and `BIC()` support multiple fitted objects
+  through the standard R methods. Previously additional arguments were ignored.
+* These extraction methods also work with complete saved 0.2.0 objects. The
+  cluster search, model selection, and Monte Carlo algorithms are unchanged.
+
 ## multiflexscan 0.2.0
 
 ### Improvements

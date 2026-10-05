@@ -1,0 +1,119 @@
+---
+title: "A workflow for multiple spatial cluster detection"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{A workflow for multiple spatial cluster detection}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 4)
+library(multiflexscan)
+```
+
+This workflow starts with region-level counts and ends with a selected cluster
+set, a global test, model diagnostics, and a map. The synthetic data keep the
+example self-contained and quick; they do not represent a disease study.
+
+## Prepare aligned spatial inputs
+
+Every vector and the neighbor list must use the same region order. Observations
+are nonnegative integer counts; expected counts are positive and should reflect
+the appropriate population standardization. Coordinates must be Cartesian.
+Here, a regular grid supplies coordinates and neighbors sharing an edge.
+
+```{r data}
+grid <- expand.grid(x = 1:5, y = 1:5)
+nb <- lapply(seq_len(nrow(grid)), function(i) which(
+  abs(grid$x - grid$x[i]) + abs(grid$y - grid$y[i]) == 1))
+observed <- rep(10, 25)
+observed[c(1, 2, 6, 7)] <- 30
+expected <- rep(mean(observed), 25)
+stopifnot(length(nb) == length(observed), all(expected > 0))
+```
+
+For real polygons, `sf::st_transform()` can project centroids and
+`spdep::poly2nb()` can construct contiguity. Check substantively whether shared
+borders imply connectivity, and exclude uninhabited regions when appropriate.
+
+## Search and test
+
+```{r fit}
+fit <- multiflexscan(grid$x, grid$y, name = as.character(seq_len(25)),
+  observed = observed, expected = expected, nb = nb,
+  scanmethod = "CIRCULAR", clustersize = 4, maxclusters = 3,
+  simcount = 99, cores = 1, seed = 20261002)
+print(fit)
+```
+
+`clustersize` limits each candidate window and `maxclusters` limits the number
+of candidates considered jointly. Use `scanmethod = "FLEXIBLE"` for connected,
+noncircular candidates and `stattype = "RESTRICTED"` for restricted likelihood
+ratios. The latter uses `ralpha`. Set `clustertype = "COLD"` for reduced-risk
+clusters. These choices change the candidate search, so compare scientifically
+plausible settings rather than choosing them to obtain a small p-value.
+
+The example uses only 99 simulations, so its p-values have a resolution of
+0.01. Increase `simcount` for an applied analysis. A fixed `seed` makes repeated
+runs reproducible with the same software and parallel configuration. Set
+`cores` explicitly; `cores = 1` uses sequential simulation, while larger values
+use a parallel backend (PSOCK by default). Record both settings.
+
+## Extract and interpret results
+
+```{r results}
+nclusters(fit)
+pvalue(fit)
+clusters(fit)
+get_setting(fit)[c("simcount", "cores", "seed")]
+```
+
+`pvalue()` tests the selected set as a whole against no clustering.
+The `P` column of `clusters()` contains scan-statistic p-values for individual
+candidates; these are different tests. A significant global test does not
+establish significance of every selected cluster. `clusters(fit, selected =
+FALSE)` also returns candidates not selected by the information criterion.
+
+```{r criteria}
+criteria <- model_criteria(fit)
+criteria
+model_criteria(fit, selected = TRUE)
+logLik(fit)
+AIC(fit)
+BIC(fit)
+C_criterion(fit)
+RDC(fit)
+plot(C ~ K, data = criteria, type = "b",
+     xlab = "Number of clusters (K)", ylab = "C(K)")
+```
+
+The selected model minimizes `C`, equivalently maximizes `RDC`; it need not
+minimize AIC or BIC. The likelihood describes the Poisson model conditional on
+the candidate regions. Minus twice that likelihood is available as
+`-2 * as.numeric(logLik(fit))` or the `neg2logLik` column. `coef(fit)` returns
+cluster summaries, not regression coefficients; use `clusters()` explicitly.
+If the selected count reaches `maxclusters`, repeat with a larger limit.
+
+## Visualize and save
+
+```{r graph}
+plot(fit, xlab = "Grid x", ylab = "Grid y")
+```
+
+If polygons are available, `choropleth(fit, regions)` displays selected clusters
+on an `sf` object with matching region order. Both plot methods highlight the
+selected clusters by default. The following optional code saves the result and
+session information without needing to rerun simulations during reporting.
+
+```{r save, eval=FALSE}
+saveRDS(list(fit = fit, session = sessionInfo()), "analysis.rds")
+saved <- readRDS("analysis.rds")
+clusters(saved$fit)
+```
+
+Inspect sensitivity to plausible neighborhood definitions, `clustersize`,
+`maxclusters`, and, for restricted scans, `ralpha`. A spatial association does
+not identify its cause. Expected counts and the Poisson assumption require
+substantive assessment; the package does not fit covariate effects or
+space-time models through its analysis interface.

@@ -12,14 +12,40 @@
 \arguments{
 \item{object}{A \code{multiflexscan} object.}
 
-\item{...}{Unused.}
+\item{...}{Optionally, additional fitted model objects for comparison.}
 
-\item{k}{Penalty per parameter for \code{AIC} (ignored; the stored AIC for
-the selected model is returned).}
+\item{k}{Numeric penalty per estimated parameter for \code{AIC}.
+The default, 2, gives ordinary AIC.}
 }
 \value{
-The AIC or BIC of the selected \eqn{K}-cluster model.
+With one object, the AIC or BIC of the selected \eqn{K}-cluster
+model. With multiple objects, a data frame containing \code{df} and
+\code{AIC} or \code{BIC}, as in \code{\link[stats:AIC]{stats::AIC()}}.
 }
 \description{
 AIC and BIC for the selected cluster model
+}
+\details{
+These methods delegate to the standard R methods via \code{\link[=logLik]{logLik()}}.
+AIC and BIC are distinct from the criterion used to select the clusters;
+use \code{\link[=C_criterion]{C_criterion()}} or \code{\link[=RDC]{RDC()}} for that criterion. Comparisons require
+models fitted to the same response data with comparable likelihoods.
+}
+\examples{
+# A small synthetic grid; low simulation count keeps this example quick.
+grid <- expand.grid(x = 1:5, y = 1:5)
+nb <- lapply(seq_len(nrow(grid)), function(i) which(
+  abs(grid$x - grid$x[i]) + abs(grid$y - grid$y[i]) == 1))
+observed <- rep(10, 25)
+observed[c(1, 2, 6, 7)] <- 30
+fit <- multiflexscan(grid$x, grid$y, name = as.character(seq_len(25)),
+  observed = observed, expected = rep(mean(observed), 25), nb = nb,
+  scanmethod = "CIRCULAR", clustersize = 4, maxclusters = 3,
+  simcount = 19, cores = 1, seed = 20261002)
+AIC(fit)
+BIC(fit)
+AIC(fit, k = log(nobs(fit)))
+}
+\seealso{
+\code{\link[=model_criteria]{model_criteria()}}, \link{logLik.multiflexscan}
 }

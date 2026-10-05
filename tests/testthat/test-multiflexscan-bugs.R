@@ -26,6 +26,25 @@ test_that("null replications yield finite max RDC and valid overall P", {
   expect_lte(fit$P, 1)
   expect_length(fit$nclust, 1L)
   expect_true(is.integer(fit$nclust) || (is.numeric(fit$nclust) && fit$nclust == as.integer(fit$nclust)))
+
+  # Refit each returned candidate model independently to verify diagnostics.
+  criteria <- model_criteria(fit)
+  dat <- data.frame(observed = nc.sids$SID74, expected = expected)
+  for (K in criteria$K) {
+    if (K > 0) {
+      dat[[paste0("z", K)]] <- as.integer(seq_len(nrow(dat)) %in%
+                                           fit$cluster[[K]]$area)
+    }
+    reference <- glm(observed ~ . - expected, offset = log(expected),
+                     family = poisson(), data = dat)
+    expect_equal(criteria$neg2logLik[K + 1L], -2 * as.numeric(logLik(reference)))
+    expect_equal(criteria$AIC[K + 1L], AIC(reference))
+    expect_equal(criteria$BIC[K + 1L], BIC(reference))
+    if (K == nclusters(fit)) {
+      expect_equal(as.numeric(logLik(fit)), as.numeric(logLik(reference)))
+      expect_equal(attr(logLik(fit), "df"), attr(logLik(reference), "df"))
+    }
+  }
 })
 
 test_that("empty candidate sets complete without error", {
@@ -54,6 +73,10 @@ test_that("empty candidate sets complete without error", {
   expect_true(is.finite(fit$P) || fit$P == 1)
   expect_gte(fit$P, 0)
   expect_lte(fit$P, 1)
+  expect_identical(model_criteria(fit)$K, 0L)
+  expect_equal(attr(logLik(fit), "df"), 1)
+  expect_equal(AIC(fit), model_criteria(fit)$AIC)
+  expect_equal(BIC(fit), model_criteria(fit)$BIC)
 })
 
 test_that("RDC ties select a single smallest K via which.max", {

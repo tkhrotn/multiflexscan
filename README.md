@@ -53,8 +53,30 @@ the same regions is available, selected clusters can be mapped with:
 choropleth(fit, regions = regions_sf)
 ```
 
+## Model diagnostics (0.3.0)
+
+```r
+model_criteria(fit)                  # all K, including K = 0
+model_criteria(fit, selected = TRUE)  # one selected model
+logLik(fit)
+-2 * as.numeric(logLik(fit))
+AIC(fit)
+BIC(fit)
+C_criterion(fit)
+RDC(fit)
+```
+
+The log-likelihood and ordinary AIC/BIC describe the selected Poisson model
+conditional on the candidate regions. Selection uses C/RDC, not ordinary
+AIC/BIC. `AIC(fit, k = 3)` supports a different penalty; `AIC(fit1, fit2)`
+and `BIC(fit1, fit2)` compare models fitted to the same response data.
+`coef(fit)` retains its existing behavior of returning a cluster summary
+table, not Poisson regression coefficients; use `clusters(fit)` for clarity.
+
 ## References
 
 - Takahashi K. and Shimadzu H. (2018). Multiple-cluster detection test for purely temporal disease clustering: integration of scan statistics and generalized linear models. PLoS ONE 13(11):e0207821.
 - Takahashi K. and Shimadzu H. (2020). Detecting multiple spatial disease clusters: information criterion and scan statistic approach. Int J Health Geogr 19, 33.
 - Otani T. and Takahashi K. (2021). Flexible scan statistics for detecting spatial disease clusters: The rflexscan R package. J Stat Softw 99(13), 1--22.
+
+A self-contained workflow is available with `vignette("workflow", package = "multiflexscan")`. It covers aligned inputs, a seeded analysis, global versus cluster-level p-values, model criteria, plotting, and saved results.

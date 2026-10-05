@@ -3,7 +3,6 @@
 ^\.git$
 ^\.gitignore$
 ^\.Rhistory$
-^build$
 ^cran-comments\.md$
 ^cran-submission$
 ^LICENSE$

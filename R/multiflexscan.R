@@ -574,6 +574,9 @@ multiflexscan <- function(x, y,
 #' @seealso [multiflexscan], [summary.multiflexscan]
 #' 
 #' @method print multiflexscan
+#' @example inst/examples/small-fit.R
+#' @examples
+#' print(fit)
 #' @export
 #' 
 print.multiflexscan <- function(x, ...) {
@@ -632,6 +635,9 @@ print.multiflexscan <- function(x, ...) {
 #'
 #' @importFrom grDevices palette
 #' @method plot multiflexscan
+#' @example inst/examples/small-fit.R
+#' @examples
+#' plot(fit, xlab = "Grid x", ylab = "Grid y")
 #' @export
 #'
 plot.multiflexscan <- function(x,
@@ -736,6 +742,17 @@ plot.multiflexscan <- function(x,
 #'
 #' @seealso [multiflexscan], [plot.multiflexscan]
 #'
+#' @example inst/examples/small-fit.R
+#' @examples
+#' if (requireNamespace("sf", quietly = TRUE)) {
+#'   polygons <- lapply(seq_len(nrow(grid)), function(i) {
+#'     x <- grid$x[i]; y <- grid$y[i]
+#'     sf::st_polygon(list(cbind(x + c(-.5, .5, .5, -.5, -.5),
+#'                              y + c(-.5, -.5, .5, .5, -.5))))
+#'   })
+#'   regions <- sf::st_sf(id = seq_len(25), geometry = sf::st_sfc(polygons))
+#'   choropleth(fit, regions)
+#' }
 #' @export
 #'
 choropleth <- function(x, regions, selected = seq_len(nclusters(x)),
@@ -794,6 +811,9 @@ choropleth <- function(x, regions, selected = seq_len(nclusters(x)),
 #' @seealso [multiflexscan], [print.summary.multiflexscan]
 #'
 #' @method summary multiflexscan
+#' @example inst/examples/small-fit.R
+#' @examples
+#' summary(fit)
 #' @export
 #'
 summary.multiflexscan <- function(object, ...) {
@@ -839,6 +859,10 @@ summary.multiflexscan <- function(object, ...) {
 #' @seealso [multiflexscan], [summary.multiflexscan]
 #'
 #' @method print summary.multiflexscan
+#' @example inst/examples/small-fit.R
+#' @examples
+#' report <- summary(fit)
+#' print(report)
 #' @export
 #'
 print.summary.multiflexscan <- function(x, ...) {

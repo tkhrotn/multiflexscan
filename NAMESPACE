@@ -4,35 +4,47 @@ S3method(AIC,multiflexscan)
 S3method(BIC,multiflexscan)
 S3method(as.data.frame,multiflexscan)
 S3method(coef,multiflexscan)
+S3method(logLik,multiflexscan)
 S3method(nobs,multiflexscan)
 S3method(plot,multiflexscan)
 S3method(print,multiflexscan)
 S3method(print,summary.multiflexscan)
 S3method(summary,multiflexscan)
+export(C_criterion)
+export(RDC)
 export(choropleth)
 export(clusters)
 export(get_setting)
+export(model_criteria)
 export(multiflexscan)
 export(nclusters)
 export(pvalue)
-importFrom(doRNG,"%dorng%")
-importFrom(doRNG,registerDoRNG)
+importFrom(doRNG,
+  "%dorng%",
+  registerDoRNG
+)
 importFrom(doSNOW,registerDoSNOW)
 importFrom(foreach,foreach)
 importFrom(grDevices,palette)
-importFrom(parallel,detectCores)
-importFrom(parallel,makeCluster)
-importFrom(parallel,stopCluster)
+importFrom(parallel,
+  detectCores,
+  makeCluster,
+  stopCluster
+)
 importFrom(rflexscan,runFleXScan)
-importFrom(stats,AIC)
-importFrom(stats,BIC)
-importFrom(stats,coef)
-importFrom(stats,glm)
-importFrom(stats,logLik)
-importFrom(stats,nobs)
-importFrom(stats,poisson)
-importFrom(stats,rpois)
-importFrom(stats,symnum)
-importFrom(utils,capture.output)
-importFrom(utils,setTxtProgressBar)
-importFrom(utils,txtProgressBar)
+importFrom(stats,
+  AIC,
+  BIC,
+  coef,
+  glm,
+  logLik,
+  nobs,
+  poisson,
+  rpois,
+  symnum
+)
+importFrom(utils,
+  capture.output,
+  setTxtProgressBar,
+  txtProgressBar
+)
